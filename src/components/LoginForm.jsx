@@ -3,43 +3,27 @@
 import React, { useState } from 'react';
 
 export default function LoginForm() {
-  const [formData, setFormData] = useState({
-    phone: '',
-    password: '',
-  });
+  const [error, setError] = useState(null);
 
-  const [responseMessage, setResponseMessage] = useState('');
-  const [error, setError] = useState('');
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  async function handleSubmit(formData) {
+    setError(null);
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      const response = await fetch("/api/login", {
+        method: "POST",
+        body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
+      const jsonResponse = await response.json();
+      console.log(jsonResponse);
 
-      const data = await response.json();
-      setResponseMessage(data.message);
-      setError('');
-    } catch (err) {
-      setError('Login failed. Please check your credentials.');
-      setResponseMessage('');
+      if (jsonResponse.error) {
+        setError(jsonResponse.error);
+      }
+    } catch (error) {
+      setError("An Error Occurred");
     }
-  };
+  }
 
   return (
     <section className="fixed top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 rounded shadow-2xl p-4">
@@ -49,19 +33,19 @@ export default function LoginForm() {
           {error}
         </div>
       )}
-      {responseMessage && (
-        <div className="px-4 py-2 border rounded mb-3 text-green-900 bg-green-200">
-          {responseMessage}
-        </div>
-      )}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-1">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          handleSubmit(formData);
+        }}
+        className="flex flex-col gap-1"
+      >
         <label htmlFor="phone">Phone number</label>
         <input
           type="text"
           id="phone"
           name="phone"
-          value={formData.phone}
-          onChange={handleChange}
           className="px-4 py-2 border rounded mb-3"
           placeholder="enter phone number here"
         />
@@ -70,13 +54,14 @@ export default function LoginForm() {
           type="password"
           id="password"
           name="password"
-          value={formData.password}
-          onChange={handleChange}
           className="px-4 py-2 border rounded mb-3"
           placeholder="enter password here"
         />
 
-        <button type="submit" className="px-4 py-2 border rounded mb-3 bg-primary">
+        <button
+          type="submit"
+          className="px-4 py-2 border rounded mb-3 bg-primary"
+        >
           Login
         </button>
       </form>
